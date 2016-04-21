@@ -36,13 +36,15 @@ for(k in 1:nrow(WksSince)){
     WksSince[k+1,] <- ifelse(PeakOrTrough[k+1,]==PeakOrTrough[k,], (WksSince[k,]+1), 1)
 }
 
-#Merge Works, need to multiply, sort, and remove extraneous columns
+#Works
 prjctchng <- as.data.frame(cbind(DLCycle, WksSince))
+prjctchng$WksSince <- prjctchng$WksSince+1
 prjctchng <- prjctchng[2:nrow(prjctchng),]
 prjctchng$index <- data.frame(c(1:nrow(prjctchng)))
 prjctchng <- merge(prjctchng, ltable, by.x = "WksSince", by.y = "Week", all.x = TRUE)
-
-
+prjctchng$Keep <- prjctchng$Value * prjctchng$rollmean.df...3...62.
+prjctchng <- prjctchng[order(prjctchng$index),]
+prjctchng <- as.matrix(prjctchng[,5])
 
 
 
