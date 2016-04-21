@@ -36,10 +36,11 @@ for(k in 1:nrow(WksSince)){
     WksSince[k+1,] <- ifelse(PeakOrTrough[k+1,]==PeakOrTrough[k,], (WksSince[k,]+1), 1)
 }
 
-#Need to build merge function off of Vlookups that reference ltable and itable
-#Not Working for Some Reason
+#Merge Works, need to multiply, sort, and remove extraneous columns
 prjctchng <- as.data.frame(cbind(DLCycle, WksSince))
-prjctchng$change <- merge(ltable, WksSince, all.y = TRUE)
+prjctchng <- prjctchng[2:nrow(prjctchng),]
+prjctchng$index <- data.frame(c(1:nrow(prjctchng)))
+prjctchng <- merge(prjctchng, ltable, by.x = "WksSince", by.y = "Week", all.x = TRUE)
 
 
 
