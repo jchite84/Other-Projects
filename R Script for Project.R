@@ -4,6 +4,8 @@ library(zoo)
 df <- read.csv(choose.files())
 itable <- read.csv(choose.files())
 ltable <- read.csv(choose.files())
+wt13 <- read.csv(choose.files())
+wt52 <- read.csv(choose.files())
 
 #I must have miscounted or something. There are about 7 extra rows in each DF
 #When building final functions, change dataframes to matrices where possible
@@ -36,18 +38,21 @@ for(k in 1:nrow(WksSince)){
 }
 
 #Works
-prjctchng <- as.matrix(cbind(DLCycle, WksSince))
-prjctchng$WksSince <- prjctchng$WksSince+1
+prjctchng <- as.data.frame(cbind(DLCycle, WksSince))
+prjctchng$V2 <- prjctchng$V2+1
 prjctchng <- prjctchng[2:nrow(prjctchng),]
 prjctchng$index <- matrix(c(1:nrow(prjctchng)))
-prjctchng <- merge(prjctchng, ltable, by.x = "WksSince", by.y = "Week", all.x = TRUE)
-prjctchng$Keep <- prjctchng$Value * prjctchng$rollmean.df...3...62.
+prjctchng <- merge(prjctchng, ltable, by.x = "V2", by.y = "Week", all.x = TRUE)
+prjctchng$Keep <- prjctchng$Value * prjctchng$V1
 prjctchng <- prjctchng[order(prjctchng$index),]
 prjctchng <- as.matrix(prjctchng[,5])
 
-#Short Calculations #NEED TESTED
+#Figure out which intermediate sets can be removed
+rm()
+
+#Short Calculations - Works
 ShortRollAvg <- as.matrix(rollmean(df[,3], 13))
-ShortLCycle <- as.matrix(2*diff(as.matrix(ShortRollAvg), lag = 13))
+ShortLCycle <- as.matrix(6.5*diff(as.matrix(ShortRollAvg), lag = 8))
 
 STrendDirection <- matrix(ncol=1, nrow = nrow(ShortLCycle))
 STrendDirection[1,1] <- 1
@@ -72,13 +77,26 @@ for(k in 1:nrow(iWksSince)){
     iWksSince[k+1,] <- ifelse(iPeakOrTrough[k+1,]==iPeakOrTrough[k,], (iWksSince[k,]+1), 1)
 }
 
-iprjctchng <- as.matrix(cbind(iDLCycle, iWksSince))
-iprjctchng$WksSince <- iprjctchng$iWksSince+1
+iprjctchng <- as.data.frame(cbind(iDLCycle, iWksSince))
+iprjctchng$V2 <- iprjctchng$V2+1
 iprjctchng <- iprjctchng[2:nrow(iprjctchng),]
 iprjctchng$index <- matrix(c(1:nrow(iprjctchng)))
-iprjctchng <- merge(iprjctchng, itable, by.x = "iWksSince", by.y = "Week", all.x = TRUE)
-iprjctchng$Keep <- iprjctchng$Value * iprjctchng$rollmean.df...3...62.
+iprjctchng <- merge(iprjctchng, itable, by.x = "V2", by.y = "Week", all.x = TRUE)
+iprjctchng$Keep <- iprjctchng$Value * iprjctchng$V1
 iprjctchng <- iprjctchng[order(iprjctchng$index),]
-iprjctchng <- as.matrix(iprjctchng[,5])
+iprjctchng <- as.matrix(iprjctchng[,6])
 
+#Price Projections
+projection <- matrix (ncol = 1, nrow = 13)
+projection[1,1] <- ifelse(df[nrow(df),3]+(iprjctchng[nrow(iprjctchng),]+
+                            prjctchng[nrow(prjctchng),])/2 < 0, 0.1,
+                          df[nrow(df),3]+(iprjctchng[nrow(iprjctchng),]+
+                                            prjctchng[nrow(prjctchng),])/2)
 
+#Needs to update all other matricies within the loop. Fuck.
+for (i in 2:14){
+  projection[i,] <- ifelse(projection[i-1,]+(iprjctchng[i,]+
+                                              prjctchng[nrow(prjctchng),])/2 < 0, 0.1,
+                            df[3,nrow(df)]+(iprjctchng[nrow(iprjctchng),]+
+                                              prjctchng[nrow(prjctchng),])/2)
+}
